@@ -1,4 +1,5 @@
 import { loginWithGoogle } from '../lib/firebase';
+import { InstallAppButton } from './InstallAppButton';
 import { BackgroundPaths } from './ui/background-paths';
 
 export function Auth() {
@@ -17,6 +18,7 @@ export function Auth() {
       title="Life Admin" 
       subtitle="Organize the essential, ignore the noise."
       onAction={handleLogin}
+      secondaryAction={<InstallAppButton />}
     />
   );
 }

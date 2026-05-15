@@ -1,5 +1,6 @@
 import { LifeTask, TaskCategory } from '../types';
 import { cn } from '../lib/utils';
+import { InstallAppButton } from './InstallAppButton';
 import { 
   Briefcase, 
   CreditCard, 
@@ -102,7 +103,8 @@ export function Sidebar({
         </div>
       </nav>
 
-      <div className="p-8">
+      <div className="space-y-3 p-8">
+        <InstallAppButton variant="sidebar" />
         <div className="bg-white p-6 rounded-3xl border border-stone-50 shadow-sm shadow-stone-100/50">
           <p className="text-[10px] font-bold text-stone-300 uppercase tracking-widest leading-relaxed">
             Status: Optimized

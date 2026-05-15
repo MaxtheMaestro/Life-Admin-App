@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { Button } from "./button";
 
@@ -80,12 +81,14 @@ export function BackgroundPaths({
     title = "Life Admin Portal",
     subtitle = "Personal Registry & Task Management",
     onAction,
+    secondaryAction,
 }: {
     logoSrc?: string;
     logoAlt?: string;
     title?: string;
     subtitle?: string;
     onAction?: () => void;
+    secondaryAction?: ReactNode;
 }) {
     const words = title.split(" ");
 
@@ -175,6 +178,16 @@ export function BackgroundPaths({
                             </span>
                         </Button>
                     </div>
+                    {secondaryAction && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8, duration: 0.6 }}
+                            className="mt-4"
+                        >
+                            {secondaryAction}
+                        </motion.div>
+                    )}
                 </motion.div>
             </div>
         </div>
