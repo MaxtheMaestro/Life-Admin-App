@@ -17,6 +17,29 @@ const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 app.use(express.json({ limit: '32kb' }));
 
+function publicErrorDetail(error) {
+  if (!error || typeof error !== 'object') {
+    return String(error);
+  }
+
+  const details = [];
+  if ('status' in error) details.push(`status=${error.status}`);
+  if ('code' in error) details.push(`code=${error.code}`);
+  if ('message' in error && typeof error.message === 'string') {
+    details.push(error.message.slice(0, 300));
+  }
+
+  return details.join(' | ') || 'Unknown upstream error';
+}
+
+app.get('/api/health', (_req, res) => {
+  res.json({
+    ok: true,
+    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    geminiModel,
+  });
+});
+
 app.post('/api/generate-checklist', async (req, res) => {
   const { taskTitle, category } = req.body || {};
 
@@ -56,7 +79,10 @@ app.post('/api/generate-checklist', async (req, res) => {
     return res.json(items);
   } catch (error) {
     console.error('Gemini checklist generation failed', error);
-    return res.status(500).json({ error: 'Checklist generation failed.' });
+    return res.status(500).json({
+      error: 'Checklist generation failed.',
+      detail: publicErrorDetail(error),
+    });
   }
 });
 
