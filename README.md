@@ -38,3 +38,5 @@ For Firebase/Auth:
 - Enable Google sign-in in Firebase Authentication.
 - Add the deployed domain to Firebase Auth authorized domains.
 - Deploy `firestore.rules` to the Firebase project used by `firebase-applet-config.json`.
+
+See [LAUNCH.md](LAUNCH.md) for the full launch checklist.
