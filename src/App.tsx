@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, testConnection } from './lib/firebase';
+import { auth, completeRedirectLogin, testConnection } from './lib/firebase';
 import { Auth } from './components/Auth';
 import { Dashboard } from './components/Dashboard';
 import { motion, AnimatePresence } from 'motion/react';
@@ -17,6 +17,9 @@ export default function App() {
 
   useEffect(() => {
     testConnection();
+    completeRedirectLogin().catch((error) => {
+      console.error("Redirect login failed", error);
+    });
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);

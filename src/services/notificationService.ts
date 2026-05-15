@@ -4,7 +4,11 @@ export const NOTIFICATION_MUTED_KEY = 'life_admin_notification_muted';
 
 export class NotificationService {
   static isSupported() {
-    return 'Notification' in window;
+    return typeof window !== 'undefined' && 'Notification' in window;
+  }
+
+  static currentPermission(): NotificationPermission {
+    return this.isSupported() ? Notification.permission : 'denied';
   }
 
   static isMuted() {
@@ -30,11 +34,11 @@ export class NotificationService {
   static async sendNotification(title: string, options?: NotificationOptions) {
     if (!this.isSupported() || this.isMuted()) return;
 
-    const permission = Notification.permission;
+    const permission = this.currentPermission();
     if (permission === 'granted') {
       try {
         // Try background notification via Service Worker if available
-        const registration = await navigator.serviceWorker.getRegistration();
+        const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
         if (registration && 'showNotification' in registration) {
           return registration.showNotification(title, {
             icon: '/life-admin-icon-192.png',

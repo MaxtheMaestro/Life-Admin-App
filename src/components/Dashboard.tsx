@@ -21,13 +21,13 @@ export function Dashboard({ user }: { user: User }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<'all' | 'pending' | 'overdue' | 'active' | 'archived'>('all');
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
-    Notification.permission
+    NotificationService.currentPermission()
   );
   const [isMuted, setIsMuted] = useState(NotificationService.isMuted());
 
   useEffect(() => {
     // Check if we should prompt for notifications
-    if (NotificationService.isSupported() && Notification.permission === 'default') {
+    if (NotificationService.currentPermission() === 'default') {
       const timer = setTimeout(() => {
         handleRequestNotifications();
       }, 2000); // Prompt after 2 seconds
@@ -40,7 +40,7 @@ export function Dashboard({ user }: { user: User }) {
     setIsMuted(newMuteState);
     NotificationService.setMuted(newMuteState);
     
-    if (!newMuteState && Notification.permission === 'default') {
+    if (!newMuteState && NotificationService.currentPermission() === 'default') {
       handleRequestNotifications();
     }
   };

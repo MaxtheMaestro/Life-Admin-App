@@ -30,12 +30,21 @@ export function InstallAppButton({ variant = 'hero' }: { variant?: 'hero' | 'sid
     };
 
     updateStandalone();
+    const standaloneMediaQuery = window.matchMedia('(display-mode: standalone)');
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.matchMedia('(display-mode: standalone)').addEventListener('change', updateStandalone);
+    if ('addEventListener' in standaloneMediaQuery) {
+      standaloneMediaQuery.addEventListener('change', updateStandalone);
+    } else {
+      standaloneMediaQuery.addListener(updateStandalone);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.matchMedia('(display-mode: standalone)').removeEventListener('change', updateStandalone);
+      if ('removeEventListener' in standaloneMediaQuery) {
+        standaloneMediaQuery.removeEventListener('change', updateStandalone);
+      } else {
+        standaloneMediaQuery.removeListener(updateStandalone);
+      }
     };
   }, []);
 

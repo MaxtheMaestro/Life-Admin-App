@@ -1,10 +1,19 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { OperationType, FirestoreErrorInfo } from '../types';
 
-const app = initializeApp(firebaseConfig);
+function getRuntimeFirebaseConfig() {
+  const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
+  return {
+    ...firebaseConfig,
+    authDomain: isLocalhost ? firebaseConfig.authDomain : window.location.host,
+  };
+}
+
+const app = initializeApp(getRuntimeFirebaseConfig());
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 
@@ -14,6 +23,18 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 });
 
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
+
+function shouldUseRedirectSignIn() {
+  const userAgent = navigator.userAgent || '';
+  const isAppleMobile = /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+  return isAppleMobile || isAndroid || isStandalone;
+}
 
 export async function testConnection() {
   try {
@@ -43,12 +64,26 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 export const loginWithGoogle = async () => {
   try {
+    if (shouldUseRedirectSignIn()) {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
+    const errorCode = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+
+    if (errorCode === 'auth/popup-blocked' || errorCode === 'auth/operation-not-supported-in-this-environment') {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
     console.error("Login failed", error);
     throw error;
   }
 };
+
+export const completeRedirectLogin = () => getRedirectResult(auth);
 
 export const logout = () => auth.signOut();
