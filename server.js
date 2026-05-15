@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const apiOnly = process.argv.includes('--api-only');
 const port = Number(process.env.PORT || (apiOnly ? 3001 : 8080));
+const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 app.use(express.json({ limit: '32kb' }));
 
@@ -30,7 +31,7 @@ app.post('/api/generate-checklist', async (req, res) => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: geminiModel,
       contents: `Generate a step-by-step checklist for a personal life admin task titled "${taskTitle}" in the category "${category}". Provide a list of small, actionable steps.`,
       config: {
         responseMimeType: 'application/json',

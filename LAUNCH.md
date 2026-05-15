@@ -14,7 +14,8 @@ In Render:
 
 1. Create a new Blueprint from the GitHub repo.
 2. When Render asks for environment variables, set `GEMINI_API_KEY`.
-3. Deploy the `life-admin` web service.
+3. Keep `GEMINI_MODEL` as `gemini-2.5-flash`, unless you intentionally want to test another model.
+4. Deploy the `life-admin` web service.
 
 Render will run:
 

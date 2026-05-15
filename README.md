@@ -32,6 +32,7 @@ Use these settings on a Node host such as Render, Railway, Fly.io, or Cloud Run:
 - Build command: `npm install && npm run build`
 - Start command: `npm start`
 - Required environment variable: `GEMINI_API_KEY`
+- Optional environment variable: `GEMINI_MODEL` defaults to `gemini-2.5-flash`
 
 For Firebase/Auth:
 
