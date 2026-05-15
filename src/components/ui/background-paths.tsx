@@ -75,10 +75,14 @@ function Ripple() {
 }
 
 export function BackgroundPaths({
+    logoSrc,
+    logoAlt = "",
     title = "Life Admin Portal",
     subtitle = "Personal Registry & Task Management",
     onAction,
 }: {
+    logoSrc?: string;
+    logoAlt?: string;
     title?: string;
     subtitle?: string;
     onAction?: () => void;
@@ -100,6 +104,16 @@ export function BackgroundPaths({
                     transition={{ duration: 2 }}
                     className="max-w-4xl mx-auto"
                 >
+                    {logoSrc && (
+                        <motion.img
+                            src={logoSrc}
+                            alt={logoAlt}
+                            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="mx-auto mb-8 h-28 w-28 sm:h-36 sm:w-36 rounded-[2rem] object-cover shadow-2xl shadow-primary/10 ring-1 ring-stone-200/70"
+                        />
+                    )}
                     <h1 className="text-5xl sm:text-7xl md:text-9xl font-bold mb-4 tracking-tighter font-display italic">
                         {words.map((word, wordIndex) => (
                             <span

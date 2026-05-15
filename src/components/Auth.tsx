@@ -12,6 +12,8 @@ export function Auth() {
 
   return (
     <BackgroundPaths 
+      logoSrc="/life-admin-logo.png"
+      logoAlt="Life Admin logo"
       title="Life Admin" 
       subtitle="Organize the essential, ignore the noise."
       onAction={handleLogin}

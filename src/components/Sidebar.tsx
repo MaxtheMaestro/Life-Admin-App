@@ -40,8 +40,17 @@ export function Sidebar({
   return (
     <aside className="w-72 bg-white flex flex-col h-full border-r border-stone-100 shadow-sm z-20 overflow-hidden transition-colors duration-300">
       <div className="p-8 shrink-0">
-        <h1 className="text-3xl font-bold tracking-tighter text-black font-display italic uppercase">Life Admin</h1>
-        <p className="text-blue-950 font-bold text-[10px] uppercase tracking-widest mt-1">Registry Workspace</p>
+        <div className="flex items-center gap-4">
+          <img
+            src="/life-admin-icon-192.png"
+            alt="Life Admin logo"
+            className="h-14 w-14 rounded-2xl object-cover shadow-md shadow-primary/10 ring-1 ring-stone-200"
+          />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tighter text-black font-display italic uppercase leading-none">Life Admin</h1>
+            <p className="text-blue-950 font-bold text-[10px] uppercase tracking-widest mt-1">Registry Workspace</p>
+          </div>
+        </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 space-y-8 scrollbar-hide py-4">

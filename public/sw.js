@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Life Admin';
   const options = {
     body: data.body || 'You have a new reminder.',
-    icon: '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: '/life-admin-icon-192.png',
+    badge: '/life-admin-icon-192.png',
     ...data.options
   };
 

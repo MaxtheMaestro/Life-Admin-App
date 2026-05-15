@@ -37,8 +37,8 @@ export class NotificationService {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration && 'showNotification' in registration) {
           return registration.showNotification(title, {
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
+            icon: '/life-admin-icon-192.png',
+            badge: '/life-admin-icon-192.png',
             vibrate: [200, 100, 200],
             requireInteraction: true,
             ...options,
@@ -50,8 +50,8 @@ export class NotificationService {
 
       // Fallback to window-level Notification
       return new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/life-admin-icon-192.png',
+        badge: '/life-admin-icon-192.png',
         ...options,
       });
     }
