@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function nullableString(value, maxSize) {
+      return value == null || (value is string && value.size() <= maxSize);
+    }
+
+    // --- Validation Helpers ---
+    function isValidUser(data, isUpdate) {
+      return data.keys().hasAll(['email', 'createdAt']) &&
+             data.keys().hasOnly(['email', 'displayName', 'photoURL', 'theme', 'createdAt', 'updatedAt']) &&
+             data.email is string && data.email.size() <= 100 &&
+             (isUpdate ? data.createdAt == resource.data.createdAt : data.createdAt == request.time) &&
+             (!('displayName' in data) || nullableString(data.displayName, 100)) &&
+             (!('photoURL' in data) || nullableString(data.photoURL, 500)) &&
+             (!('theme' in data) || (data.theme in ['light', 'dark', 'system'])) &&
+             (!('updatedAt' in data) || data.updatedAt == request.time);
+    }
+
+    function isValidLifeTask(data, isUpdate) {
+      return data.keys().hasAll(['title', 'category', 'dueDate', 'status', 'userId', 'createdAt', 'updatedAt']) &&
+             data.keys().size() <= 12 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.category in ['ID/Passport', 'Bills', 'Employment', 'Scholarships', 'Assignments', 'Car', 'Health', 'Government', 'Personal', 'Other'] &&
+             data.dueDate is timestamp &&
+             data.status in ['pending', 'completed', 'archived'] &&
+             data.userId == request.auth.uid &&
+             (isUpdate ? data.createdAt == resource.data.createdAt : data.createdAt == request.time) &&
+             data.updatedAt == request.time &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             (!('priority' in data) || (data.priority in ['low', 'medium', 'high'])) &&
+             (!('subtasks' in data) || (data.subtasks is list && data.subtasks.size() <= 50)) &&
+             (!('reminderAt' in data) || data.reminderAt == null || data.reminderAt is timestamp);
+    }
+
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming(), false);
+      allow update: if isOwner(userId) && isValidUser(incoming(), true) &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().email == existing().email &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'theme', 'updatedAt']);
+    }
+
+    // --- Tasks ---
+    match /tasks/{taskId} {
+      // Identity Poisoning Guard
+      allow get: if isSignedIn() && isValidId(taskId) && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidLifeTask(incoming(), false);
+
+      allow update: if isSignedIn() && isOwner(existing().userId) &&
+                    // Common invariants
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    (
+                      // Action: Complete/Update Status
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+                      // Action: Edit Task details
+                      (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'dueDate', 'priority', 'subtasks', 'reminderAt', 'updatedAt']))
+                    ) &&
+                    // Re-validate the whole shape
+                    isValidLifeTask(incoming(), true);
+
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+  }
+}

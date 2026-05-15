@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user preferences and public information.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User email from Firebase Auth."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User's profile photo URL."
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark", "system"],
+          "description": "Preferred UI theme."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "LifeTask": {
+      "title": "Life Admin Task",
+      "description": "An important life admin task with a deadline and checklist.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Brief description of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed notes about the task."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["ID/Passport", "Bills", "Employment", "Scholarships", "Assignments", "Car", "Health", "Government", "Personal", "Other"],
+          "description": "Category for filtering."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "completed", "archived"],
+          "description": "Current state of the task."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Urgency level."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner of the task."
+        },
+        "subtasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "completed": { "type": "boolean" }
+            }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["title", "category", "dueDate", "status", "userId", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data."
+    },
+    "/tasks/{taskId}": {
+      "schema": "LifeTask",
+      "description": "Personal life admin tasks."
+    }
+  }
+}
