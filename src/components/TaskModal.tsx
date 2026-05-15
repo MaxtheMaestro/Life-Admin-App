@@ -4,8 +4,7 @@ import { db, handleFirestoreError } from '../lib/firebase';
 import { collection, addDoc, updateDoc, doc, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { LifeTask, TaskCategory, TaskPriority, OperationType, Subtask } from '../types';
 import { motion } from 'motion/react';
-import { X, Save, Sparkles, Plus, Check, Trash2, Loader2, Calendar, Bell, Clock } from 'lucide-react';
-import { generateChecklist } from '../lib/gemini';
+import { X, Save, Plus, Check, Trash2, Loader2, Calendar, Bell, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
 
@@ -38,7 +37,6 @@ export function TaskModal({
   );
   const [reminderEnabled, setReminderEnabled] = useState(!!editingTask?.reminderAt);
   const [subtasks, setSubtasks] = useState<Subtask[]>(editingTask?.subtasks || []);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -98,17 +96,6 @@ export function TaskModal({
       handleFirestoreError(error, editingTask ? OperationType.UPDATE : OperationType.CREATE, 'tasks');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const generateAIList = async () => {
-    if (!title) return;
-    setIsGenerating(true);
-    try {
-      const items = await generateChecklist(title, category);
-      setSubtasks([...subtasks, ...items]);
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -296,15 +283,6 @@ export function TaskModal({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold uppercase tracking-widest text-stone-400 px-1">Procedural Checklist</label>
                 <div className="flex gap-2">
-                  <button 
-                    type="button"
-                    onClick={generateAIList}
-                    disabled={isGenerating || !title}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 text-primary rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-accent/20 disabled:opacity-50 transition-all border border-accent/20"
-                  >
-                    {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                    Smart Suggest
-                  </button>
                   <button 
                     type="button"
                     onClick={addManualSubtask}
