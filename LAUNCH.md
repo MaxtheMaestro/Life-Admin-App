@@ -34,7 +34,8 @@ After the Render URL exists:
 
 1. Enable Google sign-in in Firebase Authentication.
 2. Add the Render domain to Firebase Auth authorized domains.
-3. Deploy Firestore rules and indexes:
+3. Enable Apple sign-in in Firebase Authentication after configuring Sign in with Apple in the Apple Developer account.
+4. Deploy Firestore rules and indexes:
 
    ```bash
    firebase deploy --only firestore
@@ -45,6 +46,7 @@ After the Render URL exists:
 Open the Render URL and check:
 
 1. Google sign-in works.
-2. Creating a task works.
-3. Editing a task with a reminder works.
-4. Completing and deleting a task work.
+2. Apple sign-in works, if the Apple provider is configured.
+3. Creating a task works.
+4. Editing a task with a reminder works.
+5. Completing and deleting a task work.

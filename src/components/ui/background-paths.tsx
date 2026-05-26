@@ -81,6 +81,7 @@ export function BackgroundPaths({
     title = "Life Admin Portal",
     subtitle = "Personal Registry & Task Management",
     onAction,
+    actionLabel = "ENTER PORTAL",
     secondaryAction,
 }: {
     logoSrc?: string;
@@ -88,6 +89,7 @@ export function BackgroundPaths({
     title?: string;
     subtitle?: string;
     onAction?: () => void;
+    actionLabel?: string;
     secondaryAction?: ReactNode;
 }) {
     const words = title.split(" ");
@@ -168,7 +170,7 @@ export function BackgroundPaths({
                             group-hover:-translate-y-0.5 border border-primary/20"
                         >
                             <span className="opacity-90 group-hover:opacity-100 transition-opacity">
-                                ENTER PORTAL
+                                {actionLabel}
                             </span>
                              <span
                                 className="ml-3 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 
