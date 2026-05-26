@@ -7,6 +7,24 @@ import { BackgroundPaths } from './ui/background-paths';
 export function Auth() {
   const [loginError, setLoginError] = useState('');
 
+  const getLoginErrorMessage = (error: unknown, provider: 'google' | 'apple') => {
+    const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+
+    if (code === 'auth/operation-not-allowed' && provider === 'apple') {
+      return 'Apple sign-in is not enabled yet. Enable Apple in Firebase Authentication and finish Apple Developer setup.';
+    }
+
+    if (code === 'auth/unauthorized-domain') {
+      return 'This domain is not authorized for sign-in. Add life-admin-2wtl.onrender.com in Firebase Authentication settings.';
+    }
+
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return 'Sign-in was cancelled. Try again when you are ready.';
+    }
+
+    return `Sign-in could not start${code ? ` (${code})` : ''}. Open LifeAdmin in Safari or Chrome and try again.`;
+  };
+
   const handleLogin = async (provider: 'google' | 'apple') => {
     setLoginError('');
     try {
@@ -17,7 +35,7 @@ export function Auth() {
       }
     } catch (error) {
       console.error("Login failed", error);
-      setLoginError('Sign-in could not start. Open LifeAdmin in Safari or Chrome and try again.');
+      setLoginError(getLoginErrorMessage(error, provider));
     }
   };
 
