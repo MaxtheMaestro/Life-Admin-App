@@ -30,8 +30,8 @@ Use these settings on a Node host such as Render, Railway, Fly.io, or Cloud Run:
 For Firebase/Auth:
 
 - Enable Google sign-in in Firebase Authentication.
-- Enable Apple sign-in in Firebase Authentication after configuring Sign in with Apple in Apple Developer.
 - Add the deployed domain to Firebase Auth authorized domains.
+- Apple sign-in is optional and hidden by default. Only set `VITE_ENABLE_APPLE_AUTH=true` after configuring Sign in with Apple in Firebase and Apple Developer.
 - Deploy `firestore.rules` to the Firebase project used by `firebase-applet-config.json`.
 
 See [LAUNCH.md](LAUNCH.md) for the full launch checklist.

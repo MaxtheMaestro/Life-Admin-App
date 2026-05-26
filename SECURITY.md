@@ -28,3 +28,4 @@ Recommended console hardening:
 ## Apple Sign-In
 
 The code supports Apple sign-in through Firebase Auth, but Apple sign-in must also be enabled and configured in the Firebase Console and Apple Developer account before it can work in production.
+The Apple button is hidden unless the production build is created with `VITE_ENABLE_APPLE_AUTH=true`.
