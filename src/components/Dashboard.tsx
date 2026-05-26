@@ -11,6 +11,7 @@ import { LogOut, Plus, Search, Calendar, CheckSquare, Clock, Menu, Bell, BellOff
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { NotificationService } from '../services/notificationService';
+import { TASK_INPUT_LIMITS, clampTextInput } from '../lib/inputValidation';
 
 export function Dashboard({ user }: { user: User }) {
   const [tasks, setTasks] = useState<LifeTask[]>([]);
@@ -273,7 +274,8 @@ export function Dashboard({ user }: { user: User }) {
                 type="text" 
                 placeholder="Search repository..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                maxLength={TASK_INPUT_LIMITS.search}
+                onChange={(e) => setSearchQuery(clampTextInput(e.target.value, TASK_INPUT_LIMITS.search))}
                 className="w-full bg-white border border-stone-100 rounded-2xl py-3 pl-12 focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm placeholder:text-stone-300"
               />
             </div>

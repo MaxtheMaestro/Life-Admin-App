@@ -31,6 +31,10 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= maxSize);
     }
 
+    function nonEmptyString(value, maxSize) {
+      return value is string && value.size() > 0 && value.size() <= maxSize;
+    }
+
     // --- Validation Helpers ---
     function isValidUser(data, isUpdate) {
       return data.keys().hasAll(['email', 'createdAt']) &&
@@ -45,8 +49,8 @@ service cloud.firestore {
 
     function isValidLifeTask(data, isUpdate) {
       return data.keys().hasAll(['title', 'category', 'dueDate', 'status', 'userId', 'createdAt', 'updatedAt']) &&
-             data.keys().size() <= 12 &&
-             data.title is string && data.title.size() <= 200 &&
+             data.keys().hasOnly(['title', 'description', 'category', 'dueDate', 'status', 'userId', 'subtasks', 'reminderAt', 'priority', 'createdAt', 'updatedAt']) &&
+             nonEmptyString(data.title, 200) &&
              data.category in ['ID/Passport', 'Bills', 'Employment', 'Scholarships', 'Assignments', 'Car', 'Health', 'Government', 'Personal', 'Other'] &&
              data.dueDate is timestamp &&
              data.status in ['pending', 'completed', 'archived'] &&

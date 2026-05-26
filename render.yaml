@@ -10,3 +10,11 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_HOSTS
+        value: life-admin-2wtl.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://life-admin-2wtl.onrender.com
+      - key: AUTH_RATE_LIMIT_ATTEMPTS
+        value: 5

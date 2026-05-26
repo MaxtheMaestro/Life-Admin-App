@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Apple } from 'lucide-react';
 import { loginWithApple, loginWithGoogle } from '../lib/firebase';
+import { reserveAuthAttempt } from '../lib/authAttempt';
 import { InstallAppButton } from './InstallAppButton';
 import { BackgroundPaths } from './ui/background-paths';
 
@@ -20,6 +21,14 @@ export function Auth() {
       return 'This domain is not authorized for sign-in. Add life-admin-2wtl.onrender.com in Firebase Authentication settings.';
     }
 
+    if (code === 'auth/too-many-requests') {
+      return 'Too many sign-in attempts from this network. Wait a few minutes and try again.';
+    }
+
+    if (code === 'auth/attempt-check-failed') {
+      return 'Sign-in protection could not be verified. Try again in a moment.';
+    }
+
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return 'Sign-in was cancelled. Try again when you are ready.';
     }
@@ -30,6 +39,8 @@ export function Auth() {
   const handleLogin = async (provider: 'google' | 'apple') => {
     setLoginError('');
     try {
+      await reserveAuthAttempt(provider);
+
       if (provider === 'google') {
         await loginWithGoogle();
       } else {

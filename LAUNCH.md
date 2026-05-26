@@ -35,7 +35,8 @@ After the Render URL exists:
 1. Enable Google sign-in in Firebase Authentication.
 2. Add the Render domain to Firebase Auth authorized domains.
 3. Leave Apple sign-in disabled unless you have Apple Developer access. If you later configure Sign in with Apple in Firebase and Apple Developer, set `VITE_ENABLE_APPLE_AUTH=true` in the hosting environment and redeploy.
-4. Deploy Firestore rules and indexes:
+4. Keep production `ALLOWED_HOSTS` and `ALLOWED_ORIGINS` restricted to your deployed LifeAdmin domains.
+5. Deploy Firestore rules and indexes:
 
    ```bash
    firebase deploy --only firestore

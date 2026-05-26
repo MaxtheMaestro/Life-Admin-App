@@ -7,9 +7,19 @@ import { motion } from 'motion/react';
 import { X, Save, Plus, Check, Trash2, Loader2, Calendar, Bell, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
-
-const CATEGORIES: TaskCategory[] = [ "ID/Passport", "Bills", "Employment", "Scholarships", "Assignments", "Car", "Health", "Government", "Personal", "Other" ];
-const PRIORITIES: TaskPriority[] = ["low", "medium", "high"];
+import {
+  TASK_CATEGORIES,
+  TASK_INPUT_LIMITS,
+  TASK_PRIORITIES,
+  clampTextInput,
+  isTaskCategory,
+  isTaskPriority,
+  parseBoundedDate,
+  parseBoundedDateTime,
+  sanitizeMultiLineInput,
+  sanitizeSingleLineInput,
+  sanitizeSubtasks,
+} from '../lib/inputValidation';
 
 export function TaskModal({ 
   isOpen, 
@@ -38,15 +48,16 @@ export function TaskModal({
   const [reminderEnabled, setReminderEnabled] = useState(!!editingTask?.reminderAt);
   const [subtasks, setSubtasks] = useState<Subtask[]>(editingTask?.subtasks || []);
   const [isSaving, setIsSaving] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   useEffect(() => {
     if (editingTask) {
-        setTitle(editingTask.title);
-        setDescription(editingTask.description);
-        setCategory(editingTask.category);
-        setPriority(editingTask.priority);
+        setTitle(clampTextInput(editingTask.title || '', TASK_INPUT_LIMITS.title));
+        setDescription(clampTextInput(editingTask.description || '', TASK_INPUT_LIMITS.description));
+        setCategory(isTaskCategory(editingTask.category) ? editingTask.category : 'Other');
+        setPriority(isTaskPriority(editingTask.priority) ? editingTask.priority : 'medium');
         setDueDate(format(editingTask.dueDate instanceof Timestamp ? editingTask.dueDate.toDate() : new Date(editingTask.dueDate), 'yyyy-MM-dd'));
-        setSubtasks(editingTask.subtasks || []);
+        setSubtasks((editingTask.subtasks || []).slice(0, TASK_INPUT_LIMITS.subtasks));
         
         if (editingTask.reminderAt) {
           const date = editingTask.reminderAt instanceof Timestamp ? editingTask.reminderAt.toDate() : new Date(editingTask.reminderAt);
@@ -61,24 +72,43 @@ export function TaskModal({
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title || !dueDate) return;
+    setValidationError('');
+
+    const cleanTitle = sanitizeSingleLineInput(title, TASK_INPUT_LIMITS.title);
+    const cleanDescription = sanitizeMultiLineInput(description, TASK_INPUT_LIMITS.description);
+    const cleanCategory = isTaskCategory(category) ? category : 'Other';
+    const cleanPriority = isTaskPriority(priority) ? priority : 'medium';
+    const cleanSubtasks = sanitizeSubtasks(subtasks);
+    const parsedDueDate = parseBoundedDate(dueDate);
+
+    if (!cleanTitle || !parsedDueDate) {
+      setValidationError('Add a task title and a valid due date.');
+      return;
+    }
 
     setIsSaving(true);
     try {
       let reminderAt = null;
-      if (reminderEnabled && reminderDate && reminderTime) {
-        reminderAt = Timestamp.fromDate(new Date(`${reminderDate}T${reminderTime}`));
+      if (reminderEnabled) {
+        const parsedReminder = reminderDate && reminderTime
+          ? parseBoundedDateTime(reminderDate, reminderTime)
+          : null;
+        if (!parsedReminder) {
+          setValidationError('Choose a valid reminder date and time.');
+          return;
+        }
+        reminderAt = Timestamp.fromDate(parsedReminder);
       }
 
       const taskData = {
-        title,
-        description,
-        category,
-        dueDate: Timestamp.fromDate(new Date(dueDate)),
+        title: cleanTitle,
+        description: cleanDescription,
+        category: cleanCategory,
+        dueDate: Timestamp.fromDate(parsedDueDate),
         status: editingTask?.status || 'pending',
-        priority,
+        priority: cleanPriority,
         userId: user.uid,
-        subtasks,
+        subtasks: cleanSubtasks,
         reminderAt,
         updatedAt: serverTimestamp()
       };
@@ -100,20 +130,24 @@ export function TaskModal({
   };
 
   const addManualSubtask = () => {
+    if (subtasks.length >= TASK_INPUT_LIMITS.subtasks) return;
     setSubtasks([...subtasks, { title: '', completed: false }]);
   };
 
   const updateSubtask = (index: number, val: string) => {
+    if (index < 0 || index >= subtasks.length) return;
     const next = [...subtasks];
-    next[index].title = val;
+    next[index].title = clampTextInput(val, TASK_INPUT_LIMITS.subtaskTitle);
     setSubtasks(next);
   };
 
   const removeSubtask = (index: number) => {
+    if (index < 0 || index >= subtasks.length) return;
     setSubtasks(subtasks.filter((_, i) => i !== index));
   };
 
   const toggleSubtask = (index: number) => {
+    if (index < 0 || index >= subtasks.length) return;
     const next = [...subtasks];
     next[index].completed = !next[index].completed;
     setSubtasks(next);
@@ -156,7 +190,8 @@ export function TaskModal({
                   autoFocus
                   required
                   value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  maxLength={TASK_INPUT_LIMITS.title}
+                  onChange={e => setTitle(clampTextInput(e.target.value, TASK_INPUT_LIMITS.title))}
                   placeholder="e.g., Renew International Passport"
                   className="w-full bg-white border border-stone-100 rounded-2xl p-4 font-bold text-xl focus:ring-2 focus:ring-accent/30 transition-all placeholder:text-stone-300"
                 />
@@ -166,7 +201,8 @@ export function TaskModal({
                 <label className="text-xs font-bold uppercase tracking-widest text-stone-400 px-1">Observations</label>
                 <textarea 
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  maxLength={TASK_INPUT_LIMITS.description}
+                  onChange={e => setDescription(clampTextInput(e.target.value, TASK_INPUT_LIMITS.description))}
                   placeholder="Add context, reference numbers, or crucial notes..."
                   rows={3}
                   className="w-full bg-white border border-stone-100 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-stone-200 transition-all font-medium placeholder:text-stone-300"
@@ -182,7 +218,7 @@ export function TaskModal({
                   onChange={e => setCategory(e.target.value as TaskCategory)}
                   className="w-full bg-white border border-stone-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-stone-200"
                 >
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {TASK_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
@@ -194,6 +230,8 @@ export function TaskModal({
                     type="date"
                     required
                     value={dueDate}
+                    min="2000-01-01"
+                    max="2100-12-31"
                     onChange={e => setDueDate(e.target.value)}
                     className="w-full bg-white border border-stone-100 rounded-2xl p-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-stone-200"
                   />
@@ -204,7 +242,7 @@ export function TaskModal({
             <section className="space-y-2">
                <label className="text-xs font-bold uppercase tracking-widest text-stone-400 px-1">Priority Level</label>
                <div className="flex gap-3">
-                {PRIORITIES.map(p => (
+                {TASK_PRIORITIES.map(p => (
                   <button
                     key={p}
                     type="button"
@@ -257,6 +295,8 @@ export function TaskModal({
                           type="date"
                           required={reminderEnabled}
                           value={reminderDate}
+                          min="2000-01-01"
+                          max="2100-12-31"
                           onChange={e => setReminderDate(e.target.value)}
                           className="w-full bg-stone-50 border border-stone-100 rounded-2xl p-4 pl-12 text-sm font-bold focus:ring-2 focus:ring-primary/20"
                         />
@@ -286,7 +326,8 @@ export function TaskModal({
                   <button 
                     type="button"
                     onClick={addManualSubtask}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 text-stone-500 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-stone-100 transition-all border border-stone-100"
+                    disabled={subtasks.length >= TASK_INPUT_LIMITS.subtasks}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 text-stone-500 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-stone-100 transition-all border border-stone-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus className="w-3 h-3" /> Add Step
                   </button>
@@ -308,6 +349,7 @@ export function TaskModal({
                     </button>
                     <input 
                       value={st.title}
+                      maxLength={TASK_INPUT_LIMITS.subtaskTitle}
                       onChange={e => updateSubtask(i, e.target.value)}
                       placeholder="Add checklist item..."
                       className={cn(
@@ -328,11 +370,16 @@ export function TaskModal({
             </section>
           </div>
 
-          <div className="mt-12 flex gap-4">
+          <div className="mt-12 space-y-4">
+            {validationError && (
+              <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-bold uppercase tracking-widest text-red-500">
+                {validationError}
+              </p>
+            )}
             <button
               type="submit"
               disabled={isSaving}
-              className="flex-1 bg-primary text-white py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-xl shadow-primary/10 disabled:opacity-50"
+              className="w-full bg-primary text-white py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-xl shadow-primary/10 disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

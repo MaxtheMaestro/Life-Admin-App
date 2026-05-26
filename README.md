@@ -32,6 +32,7 @@ For Firebase/Auth:
 - Enable Google sign-in in Firebase Authentication.
 - Add the deployed domain to Firebase Auth authorized domains.
 - Apple sign-in is optional and hidden by default. Only set `VITE_ENABLE_APPLE_AUTH=true` after configuring Sign in with Apple in Firebase and Apple Developer.
+- Keep `ALLOWED_HOSTS` and `ALLOWED_ORIGINS` restricted to your deployed LifeAdmin domains in production. The default production domain is `life-admin-2wtl.onrender.com`.
 - Deploy `firestore.rules` to the Firebase project used by `firebase-applet-config.json`.
 
 See [LAUNCH.md](LAUNCH.md) for the full launch checklist.

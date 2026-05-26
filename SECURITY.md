@@ -10,6 +10,9 @@
   - `X-Frame-Options: DENY`
   - `Referrer-Policy: strict-origin-when-cross-origin`
   - `Permissions-Policy` denying camera, microphone, geolocation, and payment APIs.
+- Production requests are limited to whitelisted hosts/origins, and the app does not send CORS headers in production.
+- Sign-in attempts are gated through `/api/auth/attempt` and rate-limited to 5 attempts per IP per window before Firebase Auth starts.
+- Task inputs are sanitized and bounded before Firestore writes, with Firestore rules rejecting unexpected task fields.
 
 ## Firebase Web API Key
 
