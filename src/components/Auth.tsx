@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Apple } from 'lucide-react';
 import { loginWithApple, loginWithGoogle } from '../lib/firebase';
 import { reserveAuthAttempt } from '../lib/authAttempt';
@@ -7,8 +7,12 @@ import { BackgroundPaths } from './ui/background-paths';
 
 const appleSignInEnabled = import.meta.env.VITE_ENABLE_APPLE_AUTH === 'true';
 
-export function Auth() {
-  const [loginError, setLoginError] = useState('');
+export function Auth({ initialError = '' }: { initialError?: string }) {
+  const [loginError, setLoginError] = useState(initialError);
+
+  useEffect(() => {
+    setLoginError(initialError);
+  }, [initialError]);
 
   const getLoginErrorMessage = (error: unknown, provider: 'google' | 'apple') => {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
@@ -29,8 +33,16 @@ export function Auth() {
       return 'Sign-in protection could not be verified. Try again in a moment.';
     }
 
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+      return 'Your browser blocked Google sign-in. Open LifeAdmin in Safari or Chrome and allow popups for this site.';
+    }
+
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return 'Sign-in was cancelled. Try again when you are ready.';
+    }
+
+    if (code === 'auth/network-request-failed') {
+      return 'Google sign-in could not reach Firebase. Check your connection and try again.';
     }
 
     return `Sign-in could not start${code ? ` (${code})` : ''}. Open LifeAdmin in Safari or Chrome and try again.`;

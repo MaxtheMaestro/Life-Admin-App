@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, OAuthProvider, getRedirectResult, signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence, type AuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, OAuthProvider, getRedirectResult, signInWithPopup, setPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence, type AuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { OperationType, FirestoreErrorInfo } from '../types';
@@ -8,10 +8,13 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 
-// Use local persistence to stay logged in after browser close/refresh
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Auth persistence setup failed", error);
-});
+// Use the strongest persistence the browser allows, with graceful fallbacks for private/in-app browsers.
+const authPersistenceReady = setPersistence(auth, browserLocalPersistence)
+  .catch(() => setPersistence(auth, browserSessionPersistence))
+  .catch(() => setPersistence(auth, inMemoryPersistence))
+  .catch((error) => {
+    console.error("Auth persistence setup failed", error);
+  });
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -23,22 +26,12 @@ appleProvider.addScope('email');
 appleProvider.addScope('name');
 
 async function loginWithProvider(provider: AuthProvider) {
+  await authPersistenceReady;
+
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (error) {
-    const errorCode = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
-
-    if (
-      errorCode === 'auth/popup-blocked' ||
-      errorCode === 'auth/popup-closed-by-user' ||
-      errorCode === 'auth/cancelled-popup-request' ||
-      errorCode === 'auth/operation-not-supported-in-this-environment'
-    ) {
-      await signInWithRedirect(auth, provider);
-      return null;
-    }
-
     console.error("Login failed", error);
     throw error;
   }
@@ -78,6 +71,9 @@ export const loginWithApple = async () => {
   return loginWithProvider(appleProvider);
 };
 
-export const completeRedirectLogin = () => getRedirectResult(auth);
+export const completeRedirectLogin = async () => {
+  await authPersistenceReady;
+  return getRedirectResult(auth);
+};
 
 export const logout = () => auth.signOut();

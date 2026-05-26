@@ -14,17 +14,43 @@ import { Loader2 } from 'lucide-react';
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let isMounted = true;
+
     testConnection();
-    completeRedirectLogin().catch((error) => {
-      console.error("Redirect login failed", error);
-    });
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
+
+    const startAuth = async () => {
+      try {
+        await completeRedirectLogin();
+      } catch (error) {
+        console.error("Redirect login failed", error);
+        if (isMounted) {
+          const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
+          setAuthError(`Google sign-in could not finish${code ? ` (${code})` : ''}. Try again in Safari or Chrome.`);
+        }
+      }
+
+      if (!isMounted) return;
+
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (!isMounted) return;
+        if (currentUser) {
+          setAuthError('');
+        }
+        setUser(currentUser);
+        setLoading(false);
+      });
+    };
+
+    startAuth();
+
+    return () => {
+      isMounted = false;
+      unsubscribe?.();
+    };
   }, []);
 
   if (loading) {
@@ -53,7 +79,7 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Auth />
+            <Auth initialError={authError} />
           </motion.div>
         ) : (
           <motion.div
